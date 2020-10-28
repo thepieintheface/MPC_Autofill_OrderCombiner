@@ -17,6 +17,8 @@ namespace OrderCombiner
     {
         string outputFile = "";
         string mainFilePath = "";
+        string firstFileContent = "";
+        string secondFileContent = "";
         int count = 0;
         int[] size = { 18, 36, 54, 72, 90, 108, 126, 144, 162, 180, 198, 216, 234, 396, 504, 612 };
         public Form1()
@@ -27,7 +29,7 @@ namespace OrderCombiner
         }
 
         string EditCount(string toBeEdited)
-        {
+        {   
             int editAfter = toBeEdited.IndexOf("<quantity>") + 10;
             int editBefore = toBeEdited.IndexOf("</quantity>");
             StringBuilder editedText = new StringBuilder(toBeEdited);
@@ -172,69 +174,61 @@ namespace OrderCombiner
         }
         void SelectFiles()
         {
-            var firstFileContent = string.Empty;
 
+            firstFileContent = openFile();
+            secondFileContent = openFile();
 
+            
+            if(firstFileContent.Length > 10 && secondFileContent.Length > 10)
+            {
+                firstFileContent = ChopAfter(firstFileContent);
+                secondFileContent = ChopBefore(secondFileContent);
 
+                outputFile = (firstFileContent + secondFileContent);
+                outputFile = ParseString(outputFile);
+                outputFile = EditCount(outputFile);
+                outputFile = EditBracket(outputFile);
+            }
+            
+        }
+        string openFile()
+        {
+            string returnString = "";
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
                 openFileDialog.InitialDirectory = "c:\\";
-
+                openFileDialog.Filter = "xml files (*.xml)|*.xml";
                 openFileDialog.RestoreDirectory = true;
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    mainFilePath = openFileDialog.FileName;
+                   
 
                     var fileStream = openFileDialog.OpenFile();
 
                     using (StreamReader reader = new StreamReader(fileStream))
                     {
-                        firstFileContent = reader.ReadToEnd();
+                        returnString = reader.ReadToEnd();
                     }
                 }
             }
-            var secondFileContent = string.Empty;
-            var filePath2 = string.Empty;
-
-            using (OpenFileDialog openFileDialog2 = new OpenFileDialog())
-            {
-                openFileDialog2.InitialDirectory = "c:\\";
-
-                openFileDialog2.RestoreDirectory = true;
-
-                if (openFileDialog2.ShowDialog() == DialogResult.OK)
-                {
-
-
-                    var fileStream = openFileDialog2.OpenFile();
-
-                    using (StreamReader reader = new StreamReader(fileStream))
-                    {
-                        secondFileContent = reader.ReadToEnd();
-                    }
-                }
-            }
-            firstFileContent = ChopAfter(firstFileContent);
-            secondFileContent = ChopBefore(secondFileContent);
-
-            outputFile = (firstFileContent + secondFileContent);
-            outputFile = ParseString(outputFile);
-            outputFile = EditCount(outputFile);
-            outputFile = EditBracket(outputFile);
+            return returnString;
         }
 
 
         private void button1_Click(object sender, EventArgs e)
         {
-
-            XDocument doc = XDocument.Parse(outputFile);
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "XML-File | *.xml";
-            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            if (firstFileContent.Length > 10 && secondFileContent.Length > 10)
             {
-                doc.Save(saveFileDialog.FileName);
+                XDocument doc = XDocument.Parse(outputFile);
+                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                saveFileDialog.Filter = "XML-File | *.xml";
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    doc.Save(saveFileDialog.FileName);
+                }
             }
+
             
         }
 
