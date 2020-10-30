@@ -14,22 +14,18 @@ using System.Xml.Linq;
 namespace OrderCombiner
 {
     public partial class Form1 : Form
-    {
+    {   
         string outputFile = "";
-        string mainFilePath = "";
         string firstFileContent = "";
         string secondFileContent = "";
         int count = 0;
         int[] size = { 18, 36, 54, 72, 90, 108, 126, 144, 162, 180, 198, 216, 234, 396, 504, 612 };
         public Form1()
-        {  
+        {
             InitializeComponent();
-
-
         }
-
         string EditCount(string toBeEdited)
-        {   
+        {
             int editAfter = toBeEdited.IndexOf("<quantity>") + 10;
             int editBefore = toBeEdited.IndexOf("</quantity>");
             StringBuilder editedText = new StringBuilder(toBeEdited);
@@ -93,103 +89,77 @@ namespace OrderCombiner
         {
             StringBuilder buildingString = new StringBuilder(inputString);
             List<int> deletions = new List<int>();
-
-
-
             for (int i = 1; i < buildingString.Length - 2; i++)
             {
-
+                //checks to see if each character is in a card id list
                 if (Char.IsDigit(buildingString[i]) && (buildingString[i - 1] == '[' || buildingString[i - 1] == ','))
                 {
-                    //only working way i found to convert int to char
-
+                    //checks to see how long the number is and changes it into the 'count' number
                     buildingString[i] = getFirstDigit(count);
-
                     if (Char.IsDigit(buildingString[i + 1]) && count > 9)
                     {
-
-                        // checks second number
-
                         buildingString[i + 1] = getSecondDigit(count);
-
                         if (Char.IsDigit(buildingString[i + 2]))
                         {
-                            //checks 3rd number
-
-
                             buildingString[i + 2] = getThirdDigit(count);
-
-
-
-
-
                             i++;
                         }
                         else if (Char.IsDigit(buildingString[i + 2]) && count <= 99)
                         {
-
                             deletions.Add(i + 2);
-
-
                         }
                         else if (!Char.IsDigit(buildingString[i + 2]) && count > 99)
                         {
                             buildingString.Insert(i + 2, count.ToString()[2]);
                             i++;
-
                         }
-
                         i++;
                     }
                     else if (Char.IsDigit(buildingString[i + 1]) && count <= 9)
                     {
-
+                        //saves indexs of the strings for numbers to delete once modification is complete
                         deletions.Add(i + 1);
-
-
                     }
                     else if (!Char.IsDigit(buildingString[i + 1]) && count > 9)
                     {
                         buildingString.Insert(i + 1, count.ToString()[1]);
                         i++;
-
                     }
                     Console.WriteLine("cycle: " + i + "count: " + count);
-
-
-
                     count++;
                 }
 
             }
-
-
-
             for (int i = deletions.Count - 1; i >= 0; i--)
             {
-
                 buildingString.Remove(deletions[i], 1);
             }
             return buildingString.ToString();
         }
         void SelectFiles()
         {
-
             firstFileContent = openFile();
             secondFileContent = openFile();
 
-            
-            if(firstFileContent.Length > 10 && secondFileContent.Length > 10)
+            if (firstFileContent.Length > 10 && secondFileContent.Length > 10)
             {
                 firstFileContent = ChopAfter(firstFileContent);
                 secondFileContent = ChopBefore(secondFileContent);
-
                 outputFile = (firstFileContent + secondFileContent);
                 outputFile = ParseString(outputFile);
-                outputFile = EditCount(outputFile);
-                outputFile = EditBracket(outputFile);
+                if(count <= 612)
+                {
+                    outputFile = EditCount(outputFile);
+                    outputFile = EditBracket(outputFile);
+                }
+                else
+                {
+                    MessageBox.Show("Total cards cannot exceed 612, you have " + count+ " cards between your two files.");
+                    ResetVariables();
+                }
+                
             }
-            
+
         }
         string openFile()
         {
@@ -202,20 +172,23 @@ namespace OrderCombiner
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                   
-
                     var fileStream = openFileDialog.OpenFile();
-
                     using (StreamReader reader = new StreamReader(fileStream))
                     {
+                        
                         returnString = reader.ReadToEnd();
                     }
                 }
             }
             return returnString;
         }
-
-
+        void ResetVariables()
+        {
+            outputFile = "";
+            count = 0;
+            firstFileContent = "";
+            secondFileContent = "";
+        }
         private void button1_Click(object sender, EventArgs e)
         {
             if (firstFileContent.Length > 10 && secondFileContent.Length > 10)
@@ -226,14 +199,17 @@ namespace OrderCombiner
                 if (saveFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     doc.Save(saveFileDialog.FileName);
+                    ResetVariables();
                 }
             }
-
-            
+            else
+            {
+                MessageBox.Show("You do not have two files selected, please select two valid XML files");
+            }
         }
-
         private void button2_Click(object sender, EventArgs e)
         {
+            ResetVariables();
             SelectFiles();
         }
 
@@ -241,5 +217,7 @@ namespace OrderCombiner
         {
 
         }
-    }
+
+        
+    }   
 }
